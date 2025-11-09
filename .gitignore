@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.pt
+*.pth
+*.pkl
+*.h5
+
+# Node
+node_modules/
+.next/
+out/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data
+dataset/
+*.json
+!package.json
+!tsconfig.json
+
+# Model files (too large for git)
+banana_model.pt
+training_history.json
+dataset_info.json
+
