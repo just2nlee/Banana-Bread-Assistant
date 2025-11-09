@@ -32,10 +32,10 @@ A web app that predicts when your bananas will be bake-ready using AI! Upload a 
 pip install -r requirements.txt
 
 # Prepare dataset (optional - to verify data)
-python prepare_data.py
+py prepare_data.py
 
 # Train the model
-python train_model.py
+py train_model.py
 ```
 
 This will:
