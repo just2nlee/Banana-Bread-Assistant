@@ -1,8 +1,13 @@
+# CPU-only PyTorch (much smaller ~500MB vs ~2-3GB for full PyTorch)
+# This reduces build size significantly for Railway deployment
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.1.0+cpu
+torchvision==0.16.0+cpu
+
+# Other dependencies
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
-torch>=2.1.0
-torchvision>=0.16.0
 pillow>=10.1.0
 numpy>=1.24.3
 

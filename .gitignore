@@ -42,3 +42,4 @@ banana_model.pt
 training_history.json
 dataset_info.json
 
+.vercel
