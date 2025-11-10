@@ -28,14 +28,41 @@ export default function Home() {
         body: formData,
       });
 
+      // Get response as text first to handle empty or non-JSON responses
+      const responseText = await response.text();
+      console.log('API Response Status:', response.status);
+      console.log('API Response Text:', responseText);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Prediction failed');
+        // Try to parse as JSON, fallback to text
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          errorData = { 
+            detail: `HTTP ${response.status}: ${response.statusText}. Response: ${responseText.substring(0, 200)}` 
+          };
+        }
+        throw new Error(errorData.detail || errorData.message || 'Prediction failed');
       }
 
-      const data = await response.json();
+      // Parse JSON response
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse JSON:', e, 'Response:', responseText);
+        throw new Error(`Invalid response from API. Status: ${response.status}. Response: ${responseText.substring(0, 200)}`);
+      }
+
+      if (data.days_until_bake_ready === undefined && data.days_until_bake_ready !== 0) {
+        console.error('API response missing days_until_bake_ready:', data);
+        throw new Error('API response missing required field: days_until_bake_ready');
+      }
+
       setPrediction(data.days_until_bake_ready);
     } catch (err) {
+      console.error('Prediction error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);

@@ -121,20 +121,43 @@ async def predict(file: UploadFile = File(...)):
         raise HTTPException(status_code=503, detail="Model not loaded")
     
     # Validate file type
-    if not file.content_type.startswith("image/"):
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
     
     try:
+        print(f"Received file: {file.filename}, content_type: {file.content_type}, size: {file.size if hasattr(file, 'size') else 'unknown'}")
+        
         # Read image
         contents = await file.read()
-        image = Image.open(io.BytesIO(contents)).convert('RGB')
+        if len(contents) == 0:
+            raise HTTPException(status_code=400, detail="Empty file uploaded")
+        
+        print(f"Read {len(contents)} bytes from file")
+        
+        # Open and convert image
+        try:
+            image = Image.open(io.BytesIO(contents)).convert('RGB')
+            print(f"Image opened successfully: {image.size}")
+        except Exception as e:
+            print(f"Error opening image: {e}")
+            raise HTTPException(status_code=400, detail=f"Invalid image file: {str(e)}")
         
         # Preprocess
-        image_tensor = transform(image).unsqueeze(0).to(device)
+        try:
+            image_tensor = transform(image).unsqueeze(0).to(device)
+            print(f"Image preprocessed, tensor shape: {image_tensor.shape}")
+        except Exception as e:
+            print(f"Error preprocessing image: {e}")
+            raise HTTPException(status_code=500, detail=f"Image preprocessing error: {str(e)}")
         
         # Predict
-        with torch.no_grad():
-            prediction = model(image_tensor).item()
+        try:
+            with torch.no_grad():
+                prediction = model(image_tensor).item()
+            print(f"Prediction made: {prediction}")
+        except Exception as e:
+            print(f"Error during prediction: {e}")
+            raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
         
         # Convert prediction to days until bake-ready
         # Model predicts days until death, so we need to convert
@@ -145,14 +168,23 @@ async def predict(file: UploadFile = File(...)):
         # Clamp to reasonable range
         days_until_bake_ready = min(14, max(0, days_until_bake_ready))
         
-        return {
+        result = {
             "prediction": days_until_bake_ready,
             "days_until_bake_ready": days_until_bake_ready,
             "message": f"Predicted: {days_until_bake_ready} days until bake-ready 🍞",
             "raw_prediction": float(prediction)
         }
+        
+        print(f"Returning result: {result}")
+        return result
     
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
+        print(f"Unexpected error in predict endpoint: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
 
 if __name__ == "__main__":
