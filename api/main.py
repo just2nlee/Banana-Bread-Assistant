@@ -65,7 +65,13 @@ def load_model():
         model.load_state_dict(torch.load(model_path, map_location=device))
         model.eval()
         model = model.to(device)
-        print(f"Model loaded successfully from {model_path}!")
+        
+        # Warmup: Run a dummy prediction to initialize CUDA/cache (faster first real prediction)
+        print("Warming up model...")
+        dummy_input = torch.randn(1, 3, 224, 224).to(device)
+        with torch.no_grad():
+            _ = model(dummy_input)
+        print(f"Model loaded and warmed up successfully from {model_path}!")
         return True
     except Exception as e:
         print(f"Error loading model: {e}")
@@ -90,13 +96,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add request logging middleware
+# Add request logging middleware (only log errors to reduce overhead)
 @app.middleware("http")
 async def log_requests(request, call_next):
-    print(f"Request: {request.method} {request.url}")
-    print(f"Headers: {dict(request.headers)}")
     response = await call_next(request)
-    print(f"Response status: {response.status_code}")
+    if response.status_code >= 400:
+        print(f"Error: {request.method} {request.url} -> {response.status_code}")
     return response
 
 # Image preprocessing
@@ -134,38 +139,31 @@ async def predict(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be an image")
     
     try:
-        print(f"Received file: {file.filename}, content_type: {file.content_type}, size: {file.size if hasattr(file, 'size') else 'unknown'}")
-        
         # Read image
         contents = await file.read()
         if len(contents) == 0:
             raise HTTPException(status_code=400, detail="Empty file uploaded")
         
-        print(f"Read {len(contents)} bytes from file")
-        
-        # Open and convert image
+        # Open and convert image (optimized: resize early if image is very large)
         try:
             image = Image.open(io.BytesIO(contents)).convert('RGB')
-            print(f"Image opened successfully: {image.size}")
+            # Resize early if image is very large to speed up preprocessing
+            if max(image.size) > 1000:
+                image.thumbnail((1000, 1000), Image.Resampling.LANCZOS)
         except Exception as e:
-            print(f"Error opening image: {e}")
             raise HTTPException(status_code=400, detail=f"Invalid image file: {str(e)}")
         
         # Preprocess
         try:
             image_tensor = transform(image).unsqueeze(0).to(device)
-            print(f"Image preprocessed, tensor shape: {image_tensor.shape}")
         except Exception as e:
-            print(f"Error preprocessing image: {e}")
             raise HTTPException(status_code=500, detail=f"Image preprocessing error: {str(e)}")
         
-        # Predict
+        # Predict (optimized: use torch.inference_mode for faster inference)
         try:
-            with torch.no_grad():
+            with torch.inference_mode():  # Faster than torch.no_grad()
                 prediction = model(image_tensor).item()
-            print(f"Prediction made: {prediction}")
         except Exception as e:
-            print(f"Error during prediction: {e}")
             raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
         
         # Convert prediction to days until bake-ready
@@ -184,7 +182,6 @@ async def predict(file: UploadFile = File(...)):
             "raw_prediction": float(prediction)
         }
         
-        print(f"Returning result: {result}")
         return result
     
     except HTTPException:

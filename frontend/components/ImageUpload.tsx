@@ -68,9 +68,10 @@ export default function ImageUpload({ onUpload, loading }: ImageUploadProps) {
               className="max-h-64 mx-auto rounded-lg shadow-md"
             />
             {loading && (
-              <div className="text-orange-600">
-                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
-                <p className="mt-2">Analyzing banana...</p>
+              <div className="text-orange-600 space-y-2">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                <p className="mt-2 font-semibold">Analyzing banana...</p>
+                <p className="text-sm text-gray-500">This may take a few seconds</p>
               </div>
             )}
           </div>
