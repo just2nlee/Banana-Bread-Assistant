@@ -23,9 +23,13 @@ export default function Home() {
         (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
           ? 'http://localhost:8000' 
           : '/api');
+      console.log('Sending request to:', `${apiUrl}/predict`);
+      
       const response = await fetch(`${apiUrl}/predict`, {
         method: 'POST',
         body: formData,
+        // Add timeout to detect if request hangs
+        signal: AbortSignal.timeout(60000), // 60 second timeout
       });
 
       // Get response as text first to handle empty or non-JSON responses

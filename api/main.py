@@ -90,6 +90,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add request logging middleware
+@app.middleware("http")
+async def log_requests(request, call_next):
+    print(f"Request: {request.method} {request.url}")
+    print(f"Headers: {dict(request.headers)}")
+    response = await call_next(request)
+    print(f"Response status: {response.status_code}")
+    return response
+
 # Image preprocessing
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
