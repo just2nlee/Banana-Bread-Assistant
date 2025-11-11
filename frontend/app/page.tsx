@@ -13,10 +13,46 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setPrediction(null);
+    
+    // Optimize: Resize large images client-side before upload (reduces upload time)
+    const maxSize = 1000;
+    let processedFile = file;
+    
+    if (file.size > 500000) { // If larger than 500KB, resize
+      try {
+        const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = URL.createObjectURL(file);
+        });
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Canvas not supported');
+        
+        const ratio = Math.min(maxSize / image.width, maxSize / image.height);
+        canvas.width = image.width * ratio;
+        canvas.height = image.height * ratio;
+        
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        
+        // Wait for blob conversion
+        const blob = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob((b) => resolve(b), file.type, 0.9);
+        });
+        
+        if (blob) {
+          processedFile = new File([blob], file.name, { type: file.type });
+        }
+      } catch (e) {
+        console.warn('Image resize failed, using original:', e);
+      }
+    }
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', processedFile);
 
       // Use environment variable for API URL, fallback based on environment
       let apiUrl = process.env.NEXT_PUBLIC_API_URL || 
