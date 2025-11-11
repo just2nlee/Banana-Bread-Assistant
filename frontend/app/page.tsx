@@ -19,10 +19,14 @@ export default function Home() {
       formData.append('file', file);
 
       // Use environment variable for API URL, fallback based on environment
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || 
         (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
           ? 'http://localhost:8000' 
           : '/api');
+      
+      // Remove trailing slash to avoid double slashes
+      apiUrl = apiUrl.replace(/\/$/, '');
+      
       console.log('Sending request to:', `${apiUrl}/predict`);
       
       const response = await fetch(`${apiUrl}/predict`, {
