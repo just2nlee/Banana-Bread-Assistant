@@ -18,9 +18,10 @@ import numpy as np
 class BananaDataset(Dataset):
     """Dataset for banana images with day labels."""
     
-    def __init__(self, image_paths, day_labels, transform=None):
+    def __init__(self, image_paths, day_labels, death_days, transform=None):
         self.image_paths = image_paths
         self.day_labels = day_labels
+        self.death_days = death_days
         self.transform = transform
         
     def __len__(self):
@@ -30,21 +31,20 @@ class BananaDataset(Dataset):
         img_path = self.image_paths[idx]
         image = Image.open(img_path).convert('RGB')
         day = self.day_labels[idx]
+        death_day = self.death_days[idx]
         
         if self.transform:
             image = self.transform(image)
         
-        # Convert day to "days until death" (assuming day 16 is "death")
-        # We'll predict days until bake-ready (typically around day 8-10)
-        # For now, let's predict days until overripe (16 - current_day)
-        days_until_death = 16 - day
+        # Convert day to "days until death" using the specific death day for this banana
+        days_until_death = death_day - day
         
         return image, torch.tensor(days_until_death, dtype=torch.float32)
 
 def create_model(num_classes=1):
     """Create and return fine-tuned ResNet18 model."""
     # Load pretrained ResNet18
-    model = models.resnet18(pretrained=True)
+    model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
     
     # Freeze early layers
     for param in model.parameters():
@@ -65,7 +65,7 @@ def train_model(data_dir=".", epochs=50, batch_size=8, learning_rate=0.001):
     """Train the banana ripeness prediction model."""
     
     print("Preparing dataset...")
-    image_paths, day_labels = prepare_dataset(data_dir)
+    image_paths, day_labels, death_days = prepare_dataset(data_dir)
     
     if len(image_paths) == 0:
         raise ValueError("No images found! Check your data directory.")
@@ -99,11 +99,13 @@ def train_model(data_dir=".", epochs=50, batch_size=8, learning_rate=0.001):
     # Create separate datasets with different transforms
     train_image_paths = [image_paths[i] for i in train_indices]
     train_day_labels = [day_labels[i] for i in train_indices]
+    train_death_days = [death_days[i] for i in train_indices]
     val_image_paths = [image_paths[i] for i in val_indices]
     val_day_labels = [day_labels[i] for i in val_indices]
+    val_death_days = [death_days[i] for i in val_indices]
     
-    train_dataset = BananaDataset(train_image_paths, train_day_labels, train_transform)
-    val_dataset = BananaDataset(val_image_paths, val_day_labels, val_transform)
+    train_dataset = BananaDataset(train_image_paths, train_day_labels, train_death_days, train_transform)
+    val_dataset = BananaDataset(val_image_paths, val_day_labels, val_death_days, val_transform)
     
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
