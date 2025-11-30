@@ -46,7 +46,7 @@ export default function ImageUpload({ onUpload, loading }: ImageUploadProps) {
   return (
     <div>
       <div
-        className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 transition-colors"
+        className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-amber-300 transition-colors duration-200 bg-gray-50/50"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onClick={() => fileInputRef.current?.click()}
@@ -65,24 +65,24 @@ export default function ImageUpload({ onUpload, loading }: ImageUploadProps) {
             <img
               src={preview}
               alt="Banana preview"
-              className="max-h-64 mx-auto rounded-lg shadow-md"
+              className="max-h-64 mx-auto rounded-lg shadow-md border border-gray-200"
             />
             {loading && (
-              <div className="text-orange-600 space-y-2">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
-                <p className="mt-2 font-semibold">Analyzing banana...</p>
-                <p className="text-sm text-gray-500">This may take a few seconds</p>
+              <div className="text-amber-600 space-y-3">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-amber-200 border-t-amber-600"></div>
+                <p className="mt-2 font-medium text-gray-700">Analyzing banana...</p>
+                <p className="text-xs text-gray-500 font-light">This may take a few seconds</p>
               </div>
             )}
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="text-6xl">🍌</div>
+            <div className="text-5xl">🍌</div>
             <div>
-              <p className="text-lg font-semibold text-gray-700">
+              <p className="text-base font-medium text-gray-700">
                 {loading ? 'Processing...' : 'Tap or click to upload'}
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-gray-500 mt-1.5 font-light">
                 Upload a photo of your banana
               </p>
             </div>

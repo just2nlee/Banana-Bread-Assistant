@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ImageUpload from '@/components/ImageUpload';
 import PredictionResult from '@/components/PredictionResult';
+import RecipesSection from '@/components/RecipesSection';
 
 export default function Home() {
   const [prediction, setPrediction] = useState<number | null>(null);
@@ -114,33 +115,33 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-orange-600 mb-2">
+    <main className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-semibold text-amber-700 mb-3 tracking-tight">
             🍌 Banana Bread Assistant
           </h1>
-          <p className="text-lg text-gray-600">
-            Upload a banana photo to predict when it will be bake-ready!
+          <p className="text-base md:text-lg text-gray-600 font-light">
+            Upload a banana photo to predict when it will be bake-ready
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="mb-6 pb-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-700 mb-3 text-center">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 mb-8">
+          <div className="mb-8 pb-8 border-b border-gray-100">
+            <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2 text-center">
               Example Photo
             </h2>
-            <p className="text-sm text-gray-500 mb-4 text-center">
+            <p className="text-sm text-gray-500 mb-6 text-center font-light">
               Take a photo similar to this example for best results
             </p>
             <div className="flex justify-center">
               <div className="relative max-w-48">
                 <img
-                  src="/example-banana.jpg"
+                  src="/example-banana.jpeg"
                   alt="Example banana photo"
-                  className="rounded-lg shadow-md border-2 border-orange-200 w-full h-auto"
+                  className="rounded-lg shadow-md border border-gray-200 w-full h-auto"
                 />
-                <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
                   Example
                 </div>
               </div>
@@ -153,8 +154,8 @@ export default function Home() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-800">Error: {error}</p>
+          <div className="bg-red-50/80 border border-red-100 rounded-xl p-4 mb-6">
+            <p className="text-red-700 text-sm">Error: {error}</p>
           </div>
         )}
 
@@ -162,8 +163,10 @@ export default function Home() {
           <PredictionResult days={prediction} />
         )}
 
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Built with ResNet18 • Fine-tuned on banana ripeness data</p>
+        <RecipesSection />
+
+        <div className="mt-12 text-center text-xs text-gray-400 font-light">
+          <p>Built with ResNet18 • Fine-tuned on hand collected banana ripeness data</p>
         </div>
       </div>
     </main>

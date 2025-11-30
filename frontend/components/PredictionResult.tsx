@@ -25,27 +25,24 @@ export default function PredictionResult({ days }: PredictionResultProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <div className="text-center space-y-4">
-        <div className="text-6xl">{getEmoji()}</div>
-        <h2 className="text-3xl font-bold text-orange-600">
+    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+      <div className="text-center space-y-5">
+        <div className="text-5xl">{getEmoji()}</div>
+        <h2 className="text-2xl md:text-3xl font-semibold text-amber-700 tracking-tight">
           {getMessage()}
         </h2>
-        <div className="mt-6">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
+        <div className="mt-8">
+          <div className="flex justify-between text-sm text-gray-500 mb-3 font-medium">
             <span>Ripeness Progress</span>
             <span>{Math.round(getProgress())}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-4">
+          <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-yellow-400 to-orange-500 h-4 rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 h-2.5 rounded-full transition-all duration-700 ease-out"
               style={{ width: `${getProgress()}%` }}
             ></div>
           </div>
         </div>
-        <p className="text-gray-600 mt-4">
-          Days until bake-ready: <span className="font-bold text-orange-600">{days}</span>
-        </p>
       </div>
     </div>
   );
