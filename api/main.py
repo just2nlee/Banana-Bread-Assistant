@@ -109,7 +109,7 @@ def is_banana(image_tensor, confidence_threshold=0.01):
     
     Args:
         image_tensor: Preprocessed image tensor (1, 3, 224, 224)
-        confidence_threshold: Minimum probability for banana class (default: 0.15 = 15%)
+        confidence_threshold: Minimum probability for banana class (default: 0.01 = 1%)
     
     Returns:
         tuple: (is_banana: bool, confidence: float)
@@ -141,16 +141,16 @@ def is_banana(image_tensor, confidence_threshold=0.01):
                 banana_position = list(top5_indices).index(IMAGENET_BANANA_CLASS_ID)
                 print(f"Banana found at position {banana_position + 1} in top-5 with probability {top5_probs[banana_position]:.4f}")
             
-            # Stricter validation: require banana to be in top-3 AND have reasonable probability
+            # Validation: require banana to be in top-5 AND meet confidence threshold
             banana_in_top3 = IMAGENET_BANANA_CLASS_ID in top5_indices[:3]
             
             # Consider it a banana if:
-            # 1. Banana probability meets threshold (15%), AND
-            # 2. Banana is in top 3 predictions (stricter than top-5)
-            is_banana_result = banana_prob >= confidence_threshold and banana_in_top5
+            # 1. Banana probability meets threshold (1%), AND
+            # 2. Banana is in top 5 predictions
+            is_banana_result = banana_prob >= confidence_threshold 
             
             if not is_banana_result:
-                print(f"Image rejected - Banana prob: {banana_prob:.4f}, Threshold: {confidence_threshold}, In top-3: {banana_in_top3}")
+                print(f"Image rejected - Banana prob: {banana_prob:.4f}, Threshold: {confidence_threshold}, In top-5: {banana_in_top5}")
             
             return is_banana_result, banana_prob
     except Exception as e:
@@ -246,7 +246,7 @@ async def predict(file: UploadFile = File(...)):
         
         # Validate that the image is a banana BEFORE running ripeness prediction
         print("Running banana validation...")
-        is_banana_result, banana_confidence = is_banana(image_tensor, confidence_threshold=0.15)
+        is_banana_result, banana_confidence = is_banana(image_tensor, confidence_threshold=0.01)
         
         if not is_banana_result:
             print(f"Banana validation failed - Confidence: {banana_confidence:.4f}")
