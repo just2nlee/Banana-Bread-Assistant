@@ -103,7 +103,7 @@ def load_banana_classifier():
         print("Warning: Banana validation will be skipped if classifier fails to load")
         return False
 
-def is_banana(image_tensor, confidence_threshold=0.15):
+def is_banana(image_tensor, confidence_threshold=0.01):
     """
     Check if image contains a banana using ImageNet pretrained model.
     
@@ -147,7 +147,7 @@ def is_banana(image_tensor, confidence_threshold=0.15):
             # Consider it a banana if:
             # 1. Banana probability meets threshold (15%), AND
             # 2. Banana is in top 3 predictions (stricter than top-5)
-            is_banana_result = banana_prob >= confidence_threshold and banana_in_top3
+            is_banana_result = banana_prob >= confidence_threshold and banana_in_top5
             
             if not is_banana_result:
                 print(f"Image rejected - Banana prob: {banana_prob:.4f}, Threshold: {confidence_threshold}, In top-3: {banana_in_top3}")
