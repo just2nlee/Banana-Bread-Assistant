@@ -19,8 +19,8 @@ export default function PredictionResult({ days }: PredictionResultProps) {
   };
 
   const getProgress = () => {
-    // Assuming 14 days total, calculate progress
-    const progress = Math.min(100, ((14 - days) / 14) * 100);
+    // Assuming 17 days total, calculate progress
+    const progress = Math.min(100, ((17 - days) / 17) * 100);
     return progress;
   };
 
