@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
+from torchvision.models import ResNet18_Weights
 from PIL import Image
 import io
 import numpy as np
@@ -16,6 +17,10 @@ import numpy as np
 # Load model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = None
+banana_classifier = None
+
+# ImageNet class ID for banana
+IMAGENET_BANANA_CLASS_ID = 954
 
 def load_model():
     """Load the trained ResNet18 model."""
@@ -77,11 +82,90 @@ def load_model():
         print(f"Error loading model: {e}")
         return False
 
+def load_banana_classifier():
+    """Load ImageNet pretrained model for banana detection."""
+    global banana_classifier
+    try:
+        print("Loading ImageNet pretrained model for banana validation...")
+        banana_classifier = models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
+        banana_classifier.eval()
+        banana_classifier = banana_classifier.to(device)
+        
+        # Warmup: Run a dummy prediction to initialize CUDA/cache
+        print("Warming up banana classifier...")
+        dummy_input = torch.randn(1, 3, 224, 224).to(device)
+        with torch.inference_mode():
+            _ = banana_classifier(dummy_input)
+        print("Banana classifier loaded and warmed up successfully!")
+        return True
+    except Exception as e:
+        print(f"Error loading banana classifier: {e}")
+        print("Warning: Banana validation will be skipped if classifier fails to load")
+        return False
+
+def is_banana(image_tensor, confidence_threshold=0.15):
+    """
+    Check if image contains a banana using ImageNet pretrained model.
+    
+    Args:
+        image_tensor: Preprocessed image tensor (1, 3, 224, 224)
+        confidence_threshold: Minimum probability for banana class (default: 0.15 = 15%)
+    
+    Returns:
+        tuple: (is_banana: bool, confidence: float)
+    """
+    if banana_classifier is None:
+        # If classifier not loaded, fail closed (reject all images)
+        print("WARNING: Banana classifier not loaded - rejecting image for safety")
+        return False, 0.0
+    
+    try:
+        with torch.inference_mode():
+            predictions = banana_classifier(image_tensor)
+            probabilities = torch.nn.functional.softmax(predictions[0], dim=0)
+            
+            # Get banana class probability (ImageNet class 954)
+            banana_prob = probabilities[IMAGENET_BANANA_CLASS_ID].item()
+            
+            # Get top-5 predictions for debugging
+            top5_probs, top5_indices = torch.topk(probabilities, 5)
+            top5_indices = top5_indices.cpu().numpy()
+            top5_probs = top5_probs.cpu().numpy()
+            
+            # Check if banana is in top 5 predictions
+            banana_in_top5 = IMAGENET_BANANA_CLASS_ID in top5_indices
+            
+            # Log for debugging
+            print(f"Banana validation - Probability: {banana_prob:.4f} ({banana_prob*100:.2f}%), In top-5: {banana_in_top5}")
+            if banana_in_top5:
+                banana_position = list(top5_indices).index(IMAGENET_BANANA_CLASS_ID)
+                print(f"Banana found at position {banana_position + 1} in top-5 with probability {top5_probs[banana_position]:.4f}")
+            
+            # Stricter validation: require banana to be in top-3 AND have reasonable probability
+            banana_in_top3 = IMAGENET_BANANA_CLASS_ID in top5_indices[:3]
+            
+            # Consider it a banana if:
+            # 1. Banana probability meets threshold (15%), AND
+            # 2. Banana is in top 3 predictions (stricter than top-5)
+            is_banana_result = banana_prob >= confidence_threshold and banana_in_top3
+            
+            if not is_banana_result:
+                print(f"Image rejected - Banana prob: {banana_prob:.4f}, Threshold: {confidence_threshold}, In top-3: {banana_in_top3}")
+            
+            return is_banana_result, banana_prob
+    except Exception as e:
+        print(f"Error in banana validation: {e}")
+        import traceback
+        traceback.print_exc()
+        # On error, fail closed (reject the image)
+        return False, 0.0
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
     # Startup
     load_model()
+    load_banana_classifier()  # Load banana classifier for validation
     yield
     # Shutdown (if needed, add cleanup here)
 
@@ -123,6 +207,7 @@ async def health():
     return {
         "status": "healthy",
         "model_loaded": model is not None,
+        "banana_classifier_loaded": banana_classifier is not None,
         "device": str(device)
     }
 
@@ -158,6 +243,19 @@ async def predict(file: UploadFile = File(...)):
             image_tensor = transform(image).unsqueeze(0).to(device)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Image preprocessing error: {str(e)}")
+        
+        # Validate that the image is a banana BEFORE running ripeness prediction
+        print("Running banana validation...")
+        is_banana_result, banana_confidence = is_banana(image_tensor, confidence_threshold=0.15)
+        
+        if not is_banana_result:
+            print(f"Banana validation failed - Confidence: {banana_confidence:.4f}")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Image doesn't appear to be a banana. Please upload a photo of a banana. (Confidence: {banana_confidence:.1%})"
+            )
+        
+        print(f"Banana validation passed - Confidence: {banana_confidence:.4f}")
         
         # Predict (optimized: use torch.inference_mode for faster inference)
         try:

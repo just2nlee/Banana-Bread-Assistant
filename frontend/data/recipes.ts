@@ -88,7 +88,7 @@ export const recipes: Recipe[] = [
   },
   {
     id: 'healthy-chocolate',
-    title: 'Secretly Healthy Chocolate Banana Bread',
+    title: 'Healthy Chocolate Banana Bread',
     difficulty: 'intermediate',
     prepTime: '15 minutes',
     cookTime: '45-60 minutes',

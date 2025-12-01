@@ -154,8 +154,12 @@ export default function Home() {
         </div>
 
         {error && (
-          <div className="bg-red-50/80 border border-red-100 rounded-xl p-4 mb-6">
-            <p className="text-red-700 text-sm">Error: {error}</p>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6 shadow-sm">
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="text-2xl">⚠️</div>
+              <h3 className="font-semibold text-red-800">Oops!</h3>
+              <p className="text-red-700 text-sm leading-relaxed">{error}</p>
+            </div>
           </div>
         )}
 
