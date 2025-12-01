@@ -271,7 +271,7 @@ async def predict(file: UploadFile = File(...)):
         days_until_bake_ready = max(0, days_until_death - 6)  # Adjust based on your data
         
         # Clamp to reasonable range
-        days_until_bake_ready = min(14, max(0, days_until_bake_ready))
+        days_until_bake_ready = min(23, max(0, days_until_bake_ready))
         
         result = {
             "prediction": days_until_bake_ready,
