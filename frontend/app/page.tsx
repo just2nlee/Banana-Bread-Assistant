@@ -119,10 +119,10 @@ export default function Home() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-semibold text-amber-700 mb-3 tracking-tight">
-            🍌 Banana Bread Assistant
+            Banana Oracle 🍌
           </h1>
           <p className="text-base md:text-lg text-gray-600 font-light">
-            Upload a banana photo to predict when it will be bake-ready
+            Upload a banana photo to predict when it will be ready to bake!
           </p>
         </div>
 
